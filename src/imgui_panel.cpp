@@ -13,7 +13,7 @@ namespace imgui_panel {
 		  {ModelType::MassOnSpring,  "Mass On Spring"}
 		, {ModelType::ChainPendulum, "Chain Pendulum"}
 		, {ModelType::CubeOfJelly,   "Cube Of Jelly"}
-		//, {ModelType::HangingCloth,  "Hanging Cloth"} // UNCOMMENT THIS WHEN IMPLEMENTED
+		, {ModelType::HangingCloth,  "Hanging Cloth"}
 	};
 
 
@@ -65,9 +65,9 @@ namespace imgui_panel {
 			case ModelType::CubeOfJelly: {
 				// ...
 			} break;
-			// case ModelType::HangingCloth: {
-			// 	// ...
-			// } break;
+			case ModelType::HangingCloth: {
+				// ...
+			} break;
 			}
 
 			ImGui::Spacing();

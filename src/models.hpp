@@ -188,22 +188,14 @@ namespace simulation {
 
 			private:
 				//Simulation Parts
+				std::vector<std::vector<std::vector<primatives::Mass*>>> cube;
 				std::vector<primatives::Mass> masses;
 				std::vector<primatives::Spring> springs;
-				std::vector<primatives::Face> faces;
 				float ground = -10;
-				float r = 0.5;
+				float r = 1;
 				float k = 1300;
 
 				//Render
-				givr::geometry::Sphere mass_geometry;
-				givr::style::Phong mass_style;
-				givr::InstancedRenderContext<givr::geometry::Sphere, givr::style::Phong> mass_render;
-
-				givr::geometry::MultiLine spring_geometry;
-				givr::style::LineStyle spring_style;
-				givr::RenderContext<givr::geometry::MultiLine, givr::style::LineStyle> spring_render;
-
 				givr::geometry::TriangleSoup jelly_geometry;
 				givr::style::Phong jelly_style;
 				givr::RenderContext<givr::geometry::TriangleSoup, givr::style::Phong> jelly_render;
@@ -212,7 +204,39 @@ namespace simulation {
 				givr::style::Phong floor_style;
 				givr::RenderContext<givr::geometry::TriangleSoup, givr::style::Phong> floor_render;
 		}; //should be at least 4 in each direction
-		//class HangingClothModel : public GenericModel {...}; //should be at least 8 in each direction
+		class HangingClothModel : public GenericModel {
+			public:
+				HangingClothModel();
+				void reset();
+				void step(float dt);
+				void render(const ModelViewContext& view);
+
+				//Simulation Constants (you can re-assign values here from imgui)
+				glm::vec3 g = { 0.f, -9.81f, 0.f };
+				float width = 8;
+				float height = 10;
+
+			private:
+				//Simulation Parts
+				std::vector<std::vector<primatives::Mass*>> cloth;
+				std::vector<primatives::Mass> masses;
+				std::vector<primatives::Spring> springs;
+				float r = 1;
+				float k = 1300;
+
+				//Render
+				givr::geometry::Sphere mass_geometry; 
+				givr::style::Phong mass_style;
+				givr::InstancedRenderContext<givr::geometry::Sphere, givr::style::Phong> mass_render;
+
+				givr::geometry::MultiLine spring_geometry;
+				givr::style::LineStyle spring_style;
+				givr::RenderContext<givr::geometry::MultiLine, givr::style::LineStyle> spring_render;
+
+				givr::geometry::TriangleSoup cloth_geometry;
+				givr::style::Phong cloth_style;
+				givr::RenderContext<givr::geometry::TriangleSoup, givr::style::Phong> cloth_render;
+		}; //should be at least 8 in each direction
 
 	} // namespace models
 } // namespace simulation
