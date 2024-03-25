@@ -79,10 +79,11 @@ int main(void) {
 			}break;
 			case imgui_panel::ModelType::ChainPendulum: {
 				model = std::make_unique<simulation::models::ChainPendulumModel>();
-				imgui_panel::dt_simulation = 0.01f; //Good idea to hard-code a good dt for each simulation
+				imgui_panel::dt_simulation = 0.001f; //Good idea to hard-code a good dt for each simulation
 			}break;
 			case imgui_panel::ModelType::CubeOfJelly: {
-				//TO-DO: Fill
+				model = std::make_unique<simulation::models::CubeOfJellyModel>();
+				imgui_panel::dt_simulation = 0.001f;
 			}break;
 			case imgui_panel::ModelType::HangingCloth: {
 				//TO-DO: Fill

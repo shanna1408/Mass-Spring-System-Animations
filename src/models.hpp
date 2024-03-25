@@ -14,37 +14,50 @@ namespace simulation {
 		//Mass points used in all simulations
 		struct Mass {
 			bool fixed = false;
+			bool in_collision = false;
 			glm::vec3 p = glm::vec3(0.f);
 			glm::vec3 v = glm::vec3(0.f);
 			glm::vec3 a = glm::vec3(0.f);
-			glm::vec3 p_last = glm::vec3(0.f);
-			glm::vec3 p_last_last = glm::vec3(0.f);
 			// Spring force
 			glm::vec3 f_s = glm::vec3(0.f);
+			glm::vec3 f_s_opp = glm::vec3(0.f);
 			// Damping force
 			glm::vec3 f_d = glm::vec3(0.f);
+			glm::vec3 f_d_opp = glm::vec3(0.f);
 			// Total force
-			glm::vec3 f_b = glm::vec3(0.f);
+			glm::vec3 f_i = glm::vec3(0.f);
 			// Gravity
 			glm::vec3 f_g = glm::vec3(0.f);
 			float mass=1;
-			void calc_a(glm::vec3 f_b){
-				a = f_b/mass;
-			}
-			void verlet_calc_p(float dt){
-				p.y = p_last.y + (p_last.y - p_last_last.y) + (a.y*(dt*dt));
-			}
-			void verlet_calc_v(float dt){
-				v.y = (p.y-p_last.y)/dt;
-				p_last_last = p_last;
-				p_last = p;
+			void calc_a(){
+				a = f_i/mass;
 			}
 			// ***** Must update v first *****
 			void semi_implicit_p(float dt){
-				p.y = p.y + v.y * dt;
+				p = p + v * dt;
 			}
 			void semi_implicit_v(float dt){
-				v.y = v.y + a.y * dt;
+				v = v + a * dt;
+			}
+			void integrate(float dt){
+				calc_a();
+				semi_implicit_v(dt);
+				semi_implicit_p(dt);
+			}
+			void calc_collision(float ground){
+				if (p.y<ground){
+					in_collision = true;
+				}
+				if (in_collision){
+					float k = 3000;
+					glm::vec3 plane_normal = {0, 1, 0};
+					float d = glm::dot(plane_normal, p-glm::vec3({p.x, ground, p.z}));
+					glm::vec3 f_coll = -k*d*plane_normal;
+					// std::cout << "f_coll: [" << f_coll.x << ", " << f_coll.y << ", " << f_coll.z << "]" << std::endl;
+					f_i += f_coll;
+				} else if (p.y == ground) {
+					f_i -= f_g;
+				}
 			}
 		};
 
@@ -53,20 +66,41 @@ namespace simulation {
 			Mass* mass_a = nullptr;
 			Mass* mass_b = nullptr;
 			glm::vec3 s = glm::vec3(0.f);
+			// s normal
+			glm::vec3 s_n = glm::vec3(0.f);
 			// Spring force
 			glm::vec3 f_s = glm::vec3(0.f);
 			// Damping force
 			glm::vec3 f_d = glm::vec3(0.f);
 			// Spring constant
-			float k = 20;
-			//Spring resting length
-			float r = 0;
-			// Spring current length
-			float l = 0;
+			float k;
+			// //Spring resting length
+			float r;
+			// // Spring current length
+			float l;
 			// Damping coefficient
 			float c;
 			float critical_damp(float mass){
 				return (2.f*sqrt(k*mass));
+			}
+			void calc_spring_size(){
+				s = mass_a->p - mass_b->p;
+				l = glm::length(s);
+				s_n = glm::normalize(s);
+			}
+			void calc_fs(){
+				f_s = -k*(l-r)*(s_n);
+			}
+			void calc_fd(){
+				f_d = -c*(glm::dot((mass_a->v-mass_b->v),s_n))*(s_n);
+			}
+			// apply force to masses
+			void apply_forces(){
+				calc_spring_size();
+				calc_fs();
+				calc_fd();
+				mass_a->f_i += f_s + f_d;
+				mass_b->f_i += - f_s - f_d;
 			}
 		};
 
@@ -127,9 +161,10 @@ namespace simulation {
 
 			//Simulation Constants (you can re-assign values here from imgui)
 			glm::vec3 g = { 0.f, -9.81f, 0.f };
-
+			float mass_size = 0.5f;
+			float k = 100.f;
+			
 		private:
-
 			//Simulation Parts
 			std::vector<primatives::Mass> masses;
 			std::vector<primatives::Spring> springs;
@@ -144,8 +179,43 @@ namespace simulation {
 			givr::RenderContext<givr::geometry::MultiLine, givr::style::LineStyle> spring_render;
 		};
 
-		// TO-DO: Fully implements the last two using the scheme provided above
-		//class CubeOfJellyModel : public GenericModel {...}; //should be at least 4 in each direction
+		class CubeOfJellyModel : public GenericModel {
+			public:
+				CubeOfJellyModel();
+				void reset();
+				void step(float dt);
+				void render(const ModelViewContext& view);
+
+				//Simulation Constants (you can re-assign values here from imgui)
+				glm::vec3 g = { 0.f, -9.81f, 0.f };
+				float width = 6;
+				float height = 4;
+				float length = 4;
+
+			private:
+				//Simulation Parts
+				std::vector<primatives::Mass> masses;
+				std::vector<primatives::Spring> springs;
+				std::vector<primatives::Face> faces;
+				float ground = -20;
+
+				//Render
+				givr::geometry::Sphere mass_geometry;
+				givr::style::Phong mass_style;
+				givr::InstancedRenderContext<givr::geometry::Sphere, givr::style::Phong> mass_render;
+
+				givr::geometry::MultiLine spring_geometry;
+				givr::style::LineStyle spring_style;
+				givr::RenderContext<givr::geometry::MultiLine, givr::style::LineStyle> spring_render;
+
+				givr::geometry::TriangleSoup jelly_geometry;
+				givr::style::Phong jelly_style;
+				givr::RenderContext<givr::geometry::TriangleSoup, givr::style::Phong> jelly_render;
+
+				givr::geometry::TriangleSoup floor_geometry;
+				givr::style::Phong floor_style;
+				givr::RenderContext<givr::geometry::TriangleSoup, givr::style::Phong> floor_render;
+		}; //should be at least 4 in each direction
 		//class HangingClothModel : public GenericModel {...}; //should be at least 8 in each direction
 
 	} // namespace models
