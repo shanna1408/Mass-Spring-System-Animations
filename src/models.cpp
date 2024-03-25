@@ -50,11 +50,6 @@ namespace simulation {
 
 		void MassOnSpringModel::step(float dt) {
 			spring.apply_forces();
-			// mass_b.f_s.y = -spring.k*(abs(mass_b.p.y) - spring.r);
-			// // Damping force
-			// mass_b.f_d.y = -(spring.c)*mass_b.v.y;
-			// // Total force on mass b
-			// mass_b.f_i.y = -mass_b.f_s.y + mass_b.f_d.y + mass_b.f_g.y;
 			// Pull the string down
 			if (!released && mass_b.p.y>-8.f){
 				mass_b.p.y -= 0.025;
@@ -63,8 +58,8 @@ namespace simulation {
 				mass_b.f_i += mass_b.f_g;
 				released = true;
 				mass_b.integrate(dt);
-				mass_b.f_i = glm::vec3(0.f);
 			}
+			mass_b.f_i = glm::vec3(0.f);
 		}
 
 		void MassOnSpringModel::render(const ModelViewContext& view) {
@@ -150,7 +145,8 @@ namespace simulation {
 				spring.apply_forces();
 			}
 			for (primatives::Mass& mass : masses){
-				glm::vec3 f_air = glm::vec3(0.f);
+				float k = 0.05;
+				glm::vec3 f_air = -k*mass.v;
 				mass.f_i += mass.f_g + f_air;
 			}
 			for (primatives::Mass& mass : masses){
@@ -210,6 +206,7 @@ namespace simulation {
 			springs.resize(size*25);
 			
 			float n = 0;
+			float m = 0;
 			//Reset to set mass positions, so we can place springs
 			reset();
 			for (int i=0; i<masses.size(); i++){
@@ -219,9 +216,9 @@ namespace simulation {
 					if (d<=2.f){
 						springs[n].mass_a = &masses[i];
 						springs[n].mass_b = &masses[j];
-						springs[n].k = 2000;
+						springs[n].k = 150;
 						springs[n].r = d;
-						springs[n].c = springs[n].critical_damp(springs[n].mass_a->mass)*0.8f;
+						springs[n].c = springs[n].critical_damp(springs[n].mass_a->mass)*0.9f;
 						n+=1.f;
 					}
 				}
@@ -236,6 +233,7 @@ namespace simulation {
 			spring_render = givr::createRenderable(spring_geometry, spring_style);
 			jelly_render = givr::createRenderable(jelly_geometry, jelly_style);
 
+			// float ground = -20;
 			floor_geometry.push_back(givr::geometry::Point1(-500.f, ground, 500.f), givr::geometry::Point2(-500.f, ground, -500.f), givr::geometry::Point3(500.f, ground, 500.f));
 			floor_geometry.push_back(givr::geometry::Point1(-500.f, ground, -500.f), givr::geometry::Point2(500.f, ground, -500.f), givr::geometry::Point3(500.f, ground, 500.f));
 			floor_render = givr::createRenderable(floor_geometry, floor_style);
@@ -248,11 +246,7 @@ namespace simulation {
 			for (int i=0; i<CubeOfJellyModel::width; i++){
 				for (int j=0; j<CubeOfJellyModel::height; j++){
 					for (int k=0; k<CubeOfJellyModel::length; k++){
-						float x = i*r;
-						float y = j*r;
-						float z = k*r;
-						float theta = 45;
-						masses[n].p = { x, y*cos(45)-z*sin(45), y*sin(45)+z*cos(45) };
+						masses[n].p = { i*r,j*r,k*r };
 						masses[n].v = { 0.f,0.f,0.f };
 						masses[n].a = { 0.f,0.f,0.f };
 						masses[n].f_s = { 0.f,0.f,0.f };
@@ -277,7 +271,8 @@ namespace simulation {
 				spring.apply_forces();
 			}
 			for (primatives::Mass& mass : masses){
-				glm::vec3 f_air = glm::vec3(0.f);
+				float k = 0.05;
+				glm::vec3 f_air = -k*mass.v;
 				mass.f_i += mass.f_g + f_air;
 				mass.calc_collision(ground);
 				mass.integrate(dt);

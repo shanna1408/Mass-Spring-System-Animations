@@ -109,6 +109,7 @@ namespace simulation {
 			Mass* mass_a = nullptr;
 			Mass* mass_b = nullptr;
 			Mass* mass_c = nullptr;
+			
 		};
 	} // namespace primatives
 
