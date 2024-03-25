@@ -18,17 +18,11 @@ namespace simulation {
 			glm::vec3 p = glm::vec3(0.f);
 			glm::vec3 v = glm::vec3(0.f);
 			glm::vec3 a = glm::vec3(0.f);
-			// Spring force
-			glm::vec3 f_s = glm::vec3(0.f);
-			glm::vec3 f_s_opp = glm::vec3(0.f);
-			// Damping force
-			glm::vec3 f_d = glm::vec3(0.f);
-			glm::vec3 f_d_opp = glm::vec3(0.f);
 			// Total force
 			glm::vec3 f_i = glm::vec3(0.f);
 			// Gravity
 			glm::vec3 f_g = glm::vec3(0.f);
-			float mass=1;
+			float mass;
 			void calc_a(){
 				a = f_i/mass;
 			}
@@ -47,17 +41,16 @@ namespace simulation {
 			void calc_collision(float ground){
 				if (p.y<ground){
 					in_collision = true;
+				} else {
+					in_collision = false;
 				}
 				if (in_collision){
-					float k = 3000;
+					float k = 100000;
 					glm::vec3 plane_normal = {0, 1, 0};
 					float d = glm::dot(plane_normal, p-glm::vec3({p.x, ground, p.z}));
 					glm::vec3 f_coll = -k*d*plane_normal;
-					// std::cout << "f_coll: [" << f_coll.x << ", " << f_coll.y << ", " << f_coll.z << "]" << std::endl;
 					f_i += f_coll;
-				} else if (p.y == ground) {
-					f_i -= f_g;
-				}
+				} 
 			}
 		};
 
@@ -198,7 +191,9 @@ namespace simulation {
 				std::vector<primatives::Mass> masses;
 				std::vector<primatives::Spring> springs;
 				std::vector<primatives::Face> faces;
-				float ground = -20;
+				float ground = -10;
+				float r = 0.5;
+				float k = 1300;
 
 				//Render
 				givr::geometry::Sphere mass_geometry;

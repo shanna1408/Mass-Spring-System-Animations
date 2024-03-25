@@ -126,8 +126,6 @@ namespace simulation {
 				mass.p = { x,0.f,0.f };
 				mass.v = { 0.f,0.f,0.f };
 				mass.a = { 0.f,0.f,0.f };
-				mass.f_s = { 0.f,0.f,0.f };
-				mass.f_d = { 0.f,0.f,0.f };
 				mass.f_i = { 0.f,0.f,0.f };
 				x += r;
 			}
@@ -199,26 +197,28 @@ namespace simulation {
 			masses.resize(size);
 			for (int i=0; i<size; i++){
 				masses[i].fixed = false;
-				masses[i].mass = 0.5;
+				masses[i].mass = 0.1;
 				masses[i].f_g.y = -9.81*masses[i].mass;
 			}
 
+			float w = glm::length(glm::vec3{0,0,0}-glm::vec3{0.2, 0.2, 0.2});
+			std::cout << w << std::endl;
+
 			springs.resize(size*25);
-			
 			float n = 0;
-			float m = 0;
 			//Reset to set mass positions, so we can place springs
 			reset();
 			for (int i=0; i<masses.size(); i++){
 				for (int j=0; j<i; j++){
 					float d = glm::length(masses[i].p - masses[j].p);
+					float thresh = glm::length(glm::vec3{0.f,0.f,0.f} - glm::vec3{r,r,r});
 					//Add springs
-					if (d<=2.f){
+					if (d<=thresh){
 						springs[n].mass_a = &masses[i];
 						springs[n].mass_b = &masses[j];
-						springs[n].k = 150;
+						springs[n].k = k;
 						springs[n].r = d;
-						springs[n].c = springs[n].critical_damp(springs[n].mass_a->mass)*0.9f;
+						springs[n].c = springs[n].critical_damp(springs[n].mass_a->mass)*0.4;
 						n+=1.f;
 					}
 				}
@@ -241,16 +241,19 @@ namespace simulation {
 
 		void CubeOfJellyModel::reset() {
 			//As you add quantities to the primatives, they should be set here.
-			float r = 1.0f;
 			float n=0;
 			for (int i=0; i<CubeOfJellyModel::width; i++){
 				for (int j=0; j<CubeOfJellyModel::height; j++){
 					for (int k=0; k<CubeOfJellyModel::length; k++){
-						masses[n].p = { i*r,j*r,k*r };
+						float x = i*r;
+						float y = j*r;
+						float z = k*r;
+						float theta = 45;
+						// glm::vec3 y_rotation = { x*cos(theta)+z*sin(theta), y, -x*sin(theta)+z*cos(theta) };
+						masses[n].p = { x*cos(theta) - y*sin(theta), x*sin(theta) + y*cos(theta) , z } ;
+						masses[n].p = { masses[n].p.x*cos(theta)+masses[n].p.z*sin(theta), masses[n].p.y, -masses[n].p.x*sin(theta)+masses[n].p.z*cos(theta) } ;
 						masses[n].v = { 0.f,0.f,0.f };
 						masses[n].a = { 0.f,0.f,0.f };
-						masses[n].f_s = { 0.f,0.f,0.f };
-						masses[n].f_d = { 0.f,0.f,0.f };
 						masses[n].f_i = { 0.f,0.f,0.f };
 						n++;
 					}
@@ -299,20 +302,52 @@ namespace simulation {
 			}
 			givr::updateRenderable(spring_geometry, spring_style, spring_render);
 
-			// auto ts = givr::geometry::TriangleSoup();
-			// jelly_geometry.triangles().clear();
+
+			jelly_geometry.triangles().clear();
+			
+			auto pos = [&](std::size_t i, std::size_t j, std::size_t k) {
+				return masses[(i*(width)) + (j*height) + k].p;
+			};
+			auto addTriangle = [&](glm::vec3 const &p1, glm::vec3 const &p2, glm::vec3 const &p3) {
+				jelly_geometry.push_back(p1, p2, p3);
+			};
+
+			for (std::size_t i = 0; i < width; ++i) {
+				for (std::size_t j = 0; j < height; ++j) {
+					for (std::size_t k = 0; k < length; ++k) {
+						if (i == 0  && j!=0 && k!=0) {
+							addTriangle(pos(i, j-1, k-1), pos(i, j, k), pos(i, j, k-1));
+							addTriangle(pos(i, j-1, k-1), pos(i, j-1, k), pos(i, j, k));
+						}
+						if (i +1 == width  && j +1 != height && k != 0) {
+							addTriangle(pos(i, j+1, k-1), pos(i, j, k), pos(i, j, k-1));
+							addTriangle(pos(i, j+1, k-1), pos(i, j+1, k), pos(i, j, k));
+						}
+						if (j == 0  && i!=0 && k!=0) {
+							addTriangle(pos(i-1, j, k-1), pos(i, j, k), pos(i, j, k-1));
+							addTriangle(pos(i-1, j, k-1), pos(i-1, j, k), pos(i, j, k));
+						}
+						if (j +1 == height  && i +1 != width && k != 0) {
+							addTriangle(pos(i+1, j, k-1), pos(i, j, k), pos(i, j, k-1));
+							addTriangle(pos(i+1, j, k-1), pos(i+1, j, k), pos(i, j, k));
+						}
+						if (k == 0  && i!=0 && j!=0) {
+							addTriangle(pos(i-1, j-1, k), pos(i, j, k), pos(i, j-1, k));
+							addTriangle(pos(i-1, j-1, k), pos(i-1, j, k), pos(i, j, k));
+						}
+						if (k +1 == length  && i +1 != width && j != 0) {
+							addTriangle(pos(i+1, j-1, k), pos(i, j, k), pos(i, j-1, k));
+							addTriangle(pos(i+1, j-1, k), pos(i+1, j, k), pos(i, j, k));
+						}
+					}
+				}
+			}
 			// Loop over all objects in your simulation/animation
-			int p1 = 0;
-			int p2 = 5;
-			int p3 = 15;
 			// jelly_geometry.push_back(masses[p1].p, masses[p2].p, masses[p3].p);
-			// std::cout << "mass 0: [" << masses[p1].p.x << "," << masses[p1].p.y << "," << masses[p1].p.z << "]" << std::endl;
-			// std::cout << "mass 1: [" << masses[p2].p.x << "," << masses[p2].p.y << "," << masses[p2].p.z << "]" << std::endl;
-			// std::cout << "mass 2: [" << masses[p3].p.x << "," << masses[p3].p.y << "," << masses[p3].p.z << "]" << std::endl;
-			// givr::updateRenderable(jelly_geometry, jelly_style, jelly_render);
+			givr::updateRenderable(jelly_geometry, jelly_style, jelly_render);
 
 			//Render
-			givr::style::draw(mass_render, view);
+			// givr::style::draw(mass_render, view);
 			givr::style::draw(spring_render, view);
 			givr::style::draw(jelly_render, view);
 			givr::style::draw(floor_render, view);
