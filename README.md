@@ -45,7 +45,7 @@ In the integration step, the acceleration, position, and velocity are calculated
 
 ## Simulation 3 (Jelly Cube)
 
-Simulation 3 is comprised of masses and springs which form a 3-dimensional cube like shape, with 7 masses in the x direction as the `width`, and 4 masses in the y and z directions as the `height` and `length`. For this simulation, I set mass `m` to be 0.1, and each mass to be a length of 1 apart. As in the other two simulations, I initialized the force of gravity `F_g`, all of the starting acceleration, velocity, and force vectors to 0, and the position vectors to the respective mass starting positions. In order to start the cube out being rotated, I multiplied the calculated starting positions for each mass by rotation vectors defining first a 45 degree rotation around z, and then a 45 degree rotation around x. The rotation matrices are as follows:
+Simulation 3 is comprised of masses and springs which form a 3-dimensional cube like shape, with 7 masses in the x direction as the `width`, and 4 masses in the y and z directions as the `height` and `length`. For this simulation, I set mass `m` to be 0.1, and each mass to be a length of 1 apart. As in the other two simulations, I initialized the force of gravity `F_g`, all of the starting acceleration, velocity, and force vectors to 0, and the position vectors to the respective mass starting positions. In order to start the cube out being rotated, I multiplied the calculated starting positions for each mass by rotation vectors defining first a 45 degree rotation around z, and then a 45 degree rotation around x. The rotations defined by the rotation matrices multiplied by the current position are as follows:
 
 z_rotation= [x*cos(45)-y*sin(45), x*sin(45)+y*cos(45), z]
 
