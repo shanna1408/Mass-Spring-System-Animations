@@ -45,7 +45,7 @@ namespace simulation {
 					in_collision = false;
 				}
 				if (in_collision){
-					float k = 100000;
+					float k = 50000;
 					glm::vec3 plane_normal = {0, 1, 0};
 					float d = glm::dot(plane_normal, p-glm::vec3({p.x, ground, p.z}));
 					glm::vec3 f_coll = -k*d*plane_normal;
@@ -193,7 +193,7 @@ namespace simulation {
 				std::vector<primatives::Spring> springs;
 				float ground = -20;
 				float r = 1;
-				float k = 5000;
+				float k = 2000;
 
 				//Render
 				givr::geometry::TriangleSoup jelly_geometry;
