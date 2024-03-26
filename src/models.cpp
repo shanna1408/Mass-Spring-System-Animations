@@ -104,11 +104,13 @@ namespace simulation {
 			}
 
 			springs.resize(10);
+			reset();
 			for (int i=0; i<10; i++){
 				springs[i].mass_a = &masses[i];
 				springs[i].mass_b = &masses[i+1];
 				springs[i].k = 100;
-				springs[i].r = 1.5f;
+				float d = glm::length(masses[i+1].p - masses[i].p);
+				springs[i].r = d;
 				springs[i].c = springs[i].critical_damp(springs[i].mass_a->mass)*0.25;
 			}
 			//Reset Dynamic elements
@@ -121,7 +123,7 @@ namespace simulation {
 
 		void ChainPendulumModel::reset() {
 			float x = 0;
-			float r = springs[0].r;
+			float r = 1.5f;
 			for (primatives::Mass& mass : masses){
 				mass.p = { x,0.f,0.f };
 				mass.v = { 0.f,0.f,0.f };
@@ -197,9 +199,6 @@ namespace simulation {
 				masses[i].f_g.y = -9.81*masses[i].mass;
 			}
 
-			float w = glm::length(glm::vec3{0,0,0}-glm::vec3{0.2, 0.2, 0.2});
-			std::cout << w << std::endl;
-
 			springs.resize(size*25);
 			float n = 0;
 			//Reset to set mass positions, so we can place springs
@@ -214,7 +213,7 @@ namespace simulation {
 						springs[n].mass_b = &masses[j];
 						springs[n].k = k;
 						springs[n].r = d;
-						springs[n].c = springs[n].critical_damp(springs[n].mass_a->mass)*0.4;
+						springs[n].c = springs[n].critical_damp(springs[n].mass_a->mass)*0.25;
 						n+=1.f;
 					}
 				}
@@ -247,7 +246,7 @@ namespace simulation {
 						float theta = 45;
 						// glm::vec3 y_rotation = { x*cos(theta)+z*sin(theta), y, -x*sin(theta)+z*cos(theta) };
 						masses[n].p = { x*cos(theta) - y*sin(theta), x*sin(theta) + y*cos(theta) , z } ;
-						masses[n].p = { masses[n].p.x*cos(theta)+masses[n].p.z*sin(theta), masses[n].p.y, -masses[n].p.x*sin(theta)+masses[n].p.z*cos(theta) } ;
+						masses[n].p = { masses[n].p.x, masses[n].p.y*cos(theta)-masses[n].p.z*sin(theta), masses[n].p.y*sin(theta)+masses[n].p.z*cos(theta) } ;
 						masses[n].v = { 0.f,0.f,0.f };
 						masses[n].a = { 0.f,0.f,0.f };
 						masses[n].f_i = { 0.f,0.f,0.f };
@@ -259,7 +258,6 @@ namespace simulation {
 
 			for (primatives::Spring& spring : springs){
 				spring.s = { 0.f,0.f,0.f };
-				spring.r = r;
 				spring.l = r;
 				spring.f_s = { 0.f,0.f,0.f };
 				spring.f_d = { 0.f,0.f,0.f };
@@ -333,33 +331,32 @@ namespace simulation {
 			masses.resize(size);
 			for (int i=0; i<size; i++){
 				masses[i].fixed = false;
-				masses[i].mass = 0.1;
+				masses[i].mass = 0.01;
 				masses[i].f_g.y = -9.81*masses[i].mass;
 			}
-			masses[width+1].fixed = true;
+			masses[height-1].fixed = true;
 			masses[0].fixed = true;
 
-			float w = glm::length(glm::vec3{0,0,0}-glm::vec3{0.2, 0.2, 0.2});
-			std::cout << w << std::endl;
-			springs.resize(size*25);
+			springs.resize(size*12);
 			float n = 0;
 			//Reset to set mass positions, so we can place springs
 			reset();
-			// for (int i=0; i<masses.size(); i++){
-			// 	for (int j=0; j<i; j++){
-			// 		float d = glm::length(masses[i].p - masses[j].p);
-			// 		float thresh = glm::length(glm::vec3{0.f,0.f,0.f} - glm::vec3{r,r,r});
-			// 		//Add springs
-			// 		if (d<=thresh){
-			// 			springs[n].mass_a = &masses[i];
-			// 			springs[n].mass_b = &masses[j];
-			// 			springs[n].k = k;
-			// 			springs[n].r = d;
-			// 			springs[n].c = springs[n].critical_damp(springs[n].mass_a->mass)*0.4;
-			// 			n+=1.f;
-			// 		}
-			// 	}
-			// }
+			for (int i=0; i<masses.size(); i++){
+				for (int j=0; j<i; j++){
+					float d = glm::length(masses[i].p - masses[j].p);
+					float thresh = glm::length(glm::vec3{0.f,0.f,0.f} - glm::vec3{r,r,0.f});
+					float bend = glm::length(masses[0].p - masses[2].p);
+					//Add springs
+					if (d<=thresh || d==bend){
+						springs[n].mass_a = &masses[i];
+						springs[n].mass_b = &masses[j];
+						springs[n].k = k;
+						springs[n].r = d;
+						springs[n].c = springs[n].critical_damp(springs[n].mass_a->mass)*0.1;
+						n+=1.f;
+					}
+				}
+			}
 			springs.resize(n);
 
 			//Reset Dynamic elements
@@ -379,7 +376,7 @@ namespace simulation {
 				cloth[i].resize(height);
 				for (int j=0; j<HangingClothModel::height; j++){
 					float x = i*r;
-					float y = 2;
+					float y = 3;
 					float z = j*r;
 					float theta = 45;
 					masses[n].p = { x, y, z } ;
@@ -391,26 +388,27 @@ namespace simulation {
 				}
 			}
 
-			// for (primatives::Spring& spring : springs){
-			// 	spring.s = { 0.f,0.f,0.f };
-			// 	spring.r = r;
-			// 	spring.l = r;
-			// 	spring.f_s = { 0.f,0.f,0.f };
-			// 	spring.f_d = { 0.f,0.f,0.f };
-			// }
+			for (primatives::Spring& spring : springs){
+				spring.s = { 0.f,0.f,0.f };
+				spring.l = r;
+				spring.f_s = { 0.f,0.f,0.f };
+				spring.f_d = { 0.f,0.f,0.f };
+			}
 		}
 
 		void HangingClothModel::step(float dt) {
-			// for (primatives::Spring& spring : springs){
-			// 	spring.apply_forces();
-			// }
-			// for (primatives::Mass& mass : masses){
-			// 	float k = 0.05;
-			// 	glm::vec3 f_air = -k*mass.v;
-			// 	mass.f_i += mass.f_g + f_air;
-			// 	mass.integrate(dt);
-			// 	mass.f_i = glm::vec3(0.f);
-			// }
+			for (primatives::Spring& spring : springs){
+				spring.apply_forces();
+			}
+			for (primatives::Mass& mass : masses){
+				float k = 0.05;
+				glm::vec3 f_air = -k*mass.v;
+				mass.f_i += mass.f_g + f_air;
+				if (!mass.fixed) {
+					mass.integrate(dt);
+				}
+				mass.f_i = glm::vec3(0.f);
+			}
 		}
 
 		void HangingClothModel::render(const ModelViewContext& view) {
@@ -449,7 +447,7 @@ namespace simulation {
 
 			//Render
 			givr::style::draw(mass_render, view);
-			givr::style::draw(spring_render, view);
+			// givr::style::draw(spring_render, view);
 			givr::style::draw(cloth_render, view);
 		};
 	} // namespace models

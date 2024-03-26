@@ -182,7 +182,7 @@ namespace simulation {
 
 				//Simulation Constants (you can re-assign values here from imgui)
 				glm::vec3 g = { 0.f, -9.81f, 0.f };
-				float width = 6;
+				float width = 7;
 				float height = 4;
 				float length = 4;
 
@@ -191,9 +191,9 @@ namespace simulation {
 				std::vector<std::vector<std::vector<primatives::Mass*>>> cube;
 				std::vector<primatives::Mass> masses;
 				std::vector<primatives::Spring> springs;
-				float ground = -10;
+				float ground = -20;
 				float r = 1;
-				float k = 1300;
+				float k = 5000;
 
 				//Render
 				givr::geometry::TriangleSoup jelly_geometry;
@@ -213,8 +213,8 @@ namespace simulation {
 
 				//Simulation Constants (you can re-assign values here from imgui)
 				glm::vec3 g = { 0.f, -9.81f, 0.f };
-				float width = 8;
-				float height = 10;
+				float width = 15;
+				float height = 8;
 
 			private:
 				//Simulation Parts
@@ -222,7 +222,7 @@ namespace simulation {
 				std::vector<primatives::Mass> masses;
 				std::vector<primatives::Spring> springs;
 				float r = 1;
-				float k = 1300;
+				float k = 100;
 
 				//Render
 				givr::geometry::Sphere mass_geometry; 

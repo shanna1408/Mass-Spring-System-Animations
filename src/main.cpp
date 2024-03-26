@@ -75,7 +75,7 @@ int main(void) {
 			switch (model_type) {
 			case imgui_panel::ModelType::MassOnSpring: {
 				model = std::make_unique<simulation::models::MassOnSpringModel>();
-				imgui_panel::dt_simulation = 0.015f;
+				imgui_panel::dt_simulation = 0.001f;
 			}break;
 			case imgui_panel::ModelType::ChainPendulum: {
 				model = std::make_unique<simulation::models::ChainPendulumModel>();

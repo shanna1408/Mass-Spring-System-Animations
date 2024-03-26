@@ -63,10 +63,8 @@ namespace imgui_panel {
 			case ModelType::ChainPendulum: {
 			} break;
 			case ModelType::CubeOfJelly: {
-				// ...
 			} break;
 			case ModelType::HangingCloth: {
-				// ...
 			} break;
 			}
 
